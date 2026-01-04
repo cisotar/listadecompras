@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista v18 - WhatsApp</title>
+    <script src="dados.js"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        .banner { background: #4361ee; color: white; text-align: center; padding: 20px; border-radius: 12px 12px 0 0; font-size: 22px; font-weight: bold; }
+        .container { max-width: 500px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; }
+        .padding { padding: 20px; }
+        .tabs { display: flex; gap: 5px; margin-bottom: 20px; background: #eee; padding: 5px; border-radius: 8px; }
+        .tab-btn { flex: 1; padding: 10px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; background: none; }
+        .tab-btn.active { background: white; color: #4361ee; }
+        .content { display: none; } .content.active { display: block; }
+        .item-row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; gap: 10px; }
+        .qty-btn { width: 30px; height: 30px; border: 1px solid #ccc; cursor: pointer; border-radius: 4px; }
+        input[type="number"] { width: 45px; text-align: center; border: 1px solid #ddd; padding: 5px; border-radius: 4px; }
+        input[type="text"], input[type="password"], .btn-main { width: 100%; padding: 12px; margin: 5px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
+        .btn-main { background: #4361ee; color: white; border: none; cursor: pointer; font-weight: bold; }
+        .btn-zap { background: #25d366; margin-top: 5px; } /* Cor oficial do WhatsApp */
+        .btn-del { background: #e71d36; }
+        .hist-item { margin-top: 10px; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+        .hist-header { background: #f8f9fa; padding: 10px; cursor: pointer; display: block; font-weight: bold; color: #4361ee; font-size: 14px; text-decoration: none; }
+        .hist-content { display: none; padding: 10px; background: white; font-size: 14px; border-top: 1px solid #eee; }
+        .icon-btn { cursor: pointer; background: none; border: none; font-size: 16px; }
+        details { background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #eee; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="banner">LISTA DE COMPRAS</div>
+    <div class="padding">
+        <div class="tabs">
+            <button class="tab-btn active" id="t-user" onclick="openTab('user')">🛒 Cliente</button>
+            <button class="tab-btn" id="t-adm" onclick="openTab('adm')">⚙️ ADM</button>
+        </div>
+
+        <div id="user" class="content active">
+            <input type="text" id="userName" placeholder="Seu Nome">
+            <input type="text" id="q" placeholder="🔍 Buscar item..." onkeyup="render()">
+            <div id="list-u"></div>
+            <button class="btn-main" onclick="gen()">Gerar Lista</button>
+            <div id="out" style="display:none; margin:15px 0; padding:15px; background:#e7f3ff; border-radius:8px;"></div>
+            <button id="btn-save" class="btn-main" style="display:none; background:#f39c12" onclick="saveList()">💾 Salvar no Histórico</button>
+            <button id="btn-zap-u" class="btn-main btn-zap" style="display:none" onclick="sendZap()">🟢 Enviar para WhatsApp</button>
+            <hr><h4>📜 Histórico</h4><div id="u-hist"></div>
+        </div>
+
+        <div id="adm-login" class="content">
+            <input type="text" id="u-log" placeholder="Usuário">
+            <input type="password" id="p-log" placeholder="Senha">
+            <button class="btn-main" onclick="checkLog()">Entrar</button>
+            <button onclick="getHint()" style="background:none; border:none; color:#999; font-size:11px; margin-top:10px; cursor:pointer">Esqueceu a senha?</button>
+        </div>
+
+        <div id="adm-panel" class="content">
+            <div style="display:flex; justify-content:space-between; align-items:center"><h3>Painel ADM</h3><button onclick="logout()">Sair</button></div>
+            <details>
+                <summary style="cursor:pointer; font-size:13px; font-weight:bold">🔐 Alterar Usuário/Senha</summary>
+                <input type="text" id="new-u" placeholder="Novo Usuário">
+                <input type="password" id="new-p" placeholder="Nova Senha">
+                <button class="btn-main" style="padding:8px" onclick="updateCreds()">Atualizar Acesso</button>
+            </details>
+            <input type="text" id="n" placeholder="Novos itens...">
+            <button class="btn-main" onclick="add()">Adicionar ao Catálogo</button>
+            <div id="list-a"></div>
+            <button class="btn-main btn-del" onclick="del()">Excluir Selecionados</button>
+            <hr><h3>📦 Pedidos Salvos</h3><div id="a-hist"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let cat = JSON.parse(localStorage.getItem('c_v18')) || [];
+    if (typeof itensIniciais !== 'undefined' && Array.isArray(itensIniciais)) {
+        itensIniciais.forEach(i => { if(!cat.includes(i.trim())) cat.push(i.trim()); });
+        cat.sort();
+    }
+
+    let hist = JSON.parse(localStorage.getItem('h_v18')) || [], 
+        creds = JSON.parse(localStorage.getItem('creds_v18')) || {u:'admin', p:'admin'},
+        isLog = false, curHTML = "", curUser = "";
+
+    function openTab(t) {
+        document.querySelectorAll('.content, .tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById('t-'+t).classList.add('active');
+        if (t === 'adm') document.getElementById(isLog ? 'adm-panel' : 'adm-login').classList.add('active');
+        else document.getElementById('user').classList.add('active');
+        render();
+    }
+
+    function checkLog() {
+        if (document.getElementById('u-log').value === creds.u && document.getElementById('p-log').value === creds.p) {
+            isLog = true; openTab('adm');
+        } else alert('Acesso negado!');
+    }
+
+    function getHint() {
+        if(prompt("Digite a senha para ver a dica:") === 'dica') alert(`U: ${creds.u} / P: ${creds.p}`);
+    }
+
+    function updateCreds() {
+        let nu = document.getElementById('new-u').value, np = document.getElementById('new-p').value;
+        if(nu && np) { creds = {u:nu, p:np}; localStorage.setItem('creds_v18', JSON.stringify(creds)); alert("Atualizado!"); }
+    }
+
+    function logout() { isLog = false; openTab('user'); }
+
+    function add() {
+        let v = document.getElementById('n').value;
+        if(!v) return;
+        v.split(/[;,]/).forEach(i => { if(i.trim() && !cat.includes(i.trim())) cat.push(i.trim()); });
+        cat.sort(); document.getElementById('n').value = ""; save();
+    }
+
+    function edit(i) {
+        const val = prompt("Editar:", cat[i]);
+        if(val) { cat[i] = val.trim(); cat.sort(); save(); }
+    }
+
+    function del() {
+        let sel = Array.from(document.querySelectorAll('.a-ck:checked')).map(c => c.value);
+        if(sel.length && confirm("Excluir?")) { cat = cat.filter(i => !sel.includes(i)); save(); }
+    }
+
+    function save() {
+        localStorage.setItem('c_v18', JSON.stringify(cat));
+        localStorage.setItem('h_v18', JSON.stringify(hist));
+        render();
+    }
+
+    function change(i, d) {
+        let inp = document.getElementById('qty-'+i);
+        if(inp) inp.value = Math.max(0, parseInt(inp.value) + d);
+    }
+
+    function gen() {
+        let items = ""; curHTML = "";
+        curUser = document.getElementById('userName').value.trim() || "Cliente";
+        cat.forEach((it, i) => {
+            let n = document.getElementById('qty-'+i).value;
+            if(n > 0) { items += `<li>${n}x ${it}</li>`; curHTML += `${n}x ${it}\n`; }
+        });
+        document.getElementById('out').innerHTML = items ? `<ul>${items}</ul>` : "";
+        document.getElementById('out').style.display = items ? 'block' : 'none';
+        document.getElementById('btn-save').style.display = items ? 'block' : 'none';
+        document.getElementById('btn-zap-u').style.display = 'none';
+    }
+
+    function saveList() {
+        if(!document.getElementById('userName').value.trim()) return alert("Digite seu nome!");
+        hist.unshift({ label: `${new Date().toLocaleDateString()} - ${curUser}`, content: curHTML, user: curUser, id: Date.now() });
+        save(); document.getElementById('btn-zap-u').style.display = 'block'; alert("Salvo!");
+    }
+
+    // NOVA FUNÇÃO WHATSAPP
+    function sendZap(content = curHTML, user = curUser) {
+        const phone = "5511949409868";
+        const text = encodeURIComponent(`*Lista de Compras de ${user}*\n\n${content}`);
+        window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${text}`, '_blank');
+    }
+
+    function render() {
+        let q = document.getElementById('q').value.toLowerCase();
+        document.getElementById('list-a').innerHTML = cat.map((it, i) => `<div class="item-row"><input type="checkbox" class="a-ck" value="${it}"><span style="flex:1">${it}</span><button class="icon-btn" onclick="edit(${i})">✏️</button></div>`).join('');
+        document.getElementById('list-u').innerHTML = cat.filter(it => it.toLowerCase().includes(q)).map(it => {
+            let i = cat.indexOf(it);
+            return `<div class="item-row"><span style="flex:1">${it}</span><div class="qty-controls"><button class="qty-btn" onclick="change(${i},-1)">-</button><input type="number" id="qty-${i}" value="0"><button class="qty-btn" onclick="change(${i},1)">+</button></div></div>`;
+        }).join('');
+        
+        const hHTML = hist.map(h => `
+            <div class="hist-item">
+                <a class="hist-header" onclick="document.getElementById('d-${h.id}').style.display=document.getElementById('d-${h.id}').style.display==='block'?'none':'block'">📁 ${h.label}</a>
+                <div class="hist-content" id="d-${h.id}">
+                    ${h.content.replace(/\n/g, '<br>')}
+                    <button class="btn-main btn-zap" style="font-size:11px; padding:5px" onclick="sendZap('${h.content.replace(/\n/g, "\\n").replace(/'/g, "\\'")}', '${h.user}')">🟢 Enviar para WhatsApp</button>
+                </div>
+            </div>`).join('');
+        document.getElementById('u-hist').innerHTML = document.getElementById('a-hist').innerHTML = hHTML || "Vazio";
+    }
+    render();
+</script>
+</body>
+</html>

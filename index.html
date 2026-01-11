@@ -26,11 +26,18 @@
         .opt { padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; cursor: pointer; background: #fff; }
         .opt.ativa { background: #4361ee; color: white; border-color: #4361ee; }
         
-        /* OBSERVAÇÕES CENTRALIZADO */
         .obs-input { width: 100%; padding: 8px; margin-top: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; text-align: center; background: #fcfcfc; }
         
         .btn-add { background: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 13px; margin-left: auto; font-weight: bold; }
+        
+        /* ESTILO DA CESTA COM BOTÕES */
         .cesta { margin-top: 20px; padding: 15px; background: #e7f3ff; border-radius: 8px; border-left: 5px solid #4361ee; }
+        .item-cesta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #c8d9eb; padding-bottom: 5px; }
+        .controles-cesta { display: flex; gap: 5px; }
+        .btn-cesta { border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; color: white; }
+        .btn-edit { background: #ffc107; color: #333; }
+        .btn-del { background: #dc3545; }
+
         .btn-finalizar { width: 100%; padding: 16px; background: #4361ee; color: white; border: none; border-radius: 8px; font-weight: bold; margin-top: 10px; cursor: pointer; font-size: 16px; }
     </style>
 </head>
@@ -44,7 +51,7 @@
         <div id="lista"></div>
         <div id="cesta-box" class="cesta" style="display:none">
             <strong>Itens Adicionados:</strong>
-            <ul id="lista-cesta" style="font-size:14px; padding-left:20px; margin-top: 10px;"></ul>
+            <div id="lista-cesta" style="font-size:14px; margin-top: 10px;"></div>
             <button class="btn-finalizar" onclick="processarPedido()">Finalizar e Enviar Pedido</button>
         </div>
     </div>
@@ -68,16 +75,38 @@
     function adicionar(i) {
         let q = parseInt(document.getElementById('q-'+i).value);
         if(q <= 0) return;
+        
         cesta.push({
+            id: Date.now(),
             nome: document.getElementById('n-'+i).innerText,
             quantidade: q,
             unidade: document.getElementById('val-u-'+i).value,
             maturacao: document.getElementById('val-m-'+i).value,
-            observacao: document.getElementById('obs-'+i).value
+            observacao: document.getElementById('obs-'+i).value,
+            indiceOriginal: i // Para facilitar a re-edição
         });
+        
         document.getElementById('q-'+i).value = 0;
         document.getElementById('obs-'+i).value = "";
         atualizarCesta();
+    }
+
+    function removerItem(id) {
+        cesta = cesta.filter(it => it.id !== id);
+        atualizarCesta();
+    }
+
+    function editarItem(id) {
+        let item = cesta.find(it => it.id === id);
+        if(item) {
+            // Devolve os valores para o card original
+            document.getElementById('q-'+item.indiceOriginal).value = item.quantidade;
+            document.getElementById('obs-'+item.indiceOriginal).value = item.observacao;
+            // Remove da cesta para "substituir" ao adicionar de novo
+            removerItem(id);
+            // Faz scroll até o item para o cliente ver que voltou para edição
+            document.getElementById('n-'+item.indiceOriginal).scrollIntoView({behavior: "smooth", block: "center"});
+        }
     }
 
     function atualizarCesta() {
@@ -85,16 +114,24 @@
         let lista = document.getElementById('lista-cesta');
         if(cesta.length === 0) { box.style.display = 'none'; return; }
         box.style.display = 'block';
-        lista.innerHTML = cesta.map(it => `<li><b>${it.quantidade}${it.unidade}</b> ${it.nome} (${it.maturacao})</li>`).join('');
+        
+        lista.innerHTML = cesta.map(it => `
+            <div class="item-cesta">
+                <span><b>${it.quantidade}${it.unidade}</b> ${it.nome} (${it.maturacao})</span>
+                <div class="controles-cesta">
+                    <button class="btn-cesta btn-edit" onclick="editarItem(${it.id})">Editar</button>
+                    <button class="btn-cesta btn-del" onclick="removerItem(${it.id})">X</button>
+                </div>
+            </div>
+        `).join('');
     }
 
     async function processarPedido() {
         let nome = document.getElementById('cliente').value.trim();
         if(!nome) return alert("Digite o nome do cliente!");
 
-        const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbwHOKOL2klFNyTAu_r4JJ8Fbh3zCUXZttSQP-OgIQ7wyZGak-5uk3qufyfIjmSQBDXWWQ/exec";
+        const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbwHOKOL2klFNyTAu_r4JJ8Fbh3zCUXZttSQP-OgIQ7wyZGak-5uk3qufyfIjmSQBDXWWQ/exec"; // Substitua pela sua URL do Apps Script
         
-        // REFORMULAÇÃO: LISTA EM LINHA ÚNICA
         let listaFormatada = cesta.map(it => `${it.quantidade}${it.unidade} ${it.nome} (${it.maturacao})${it.observacao ? ' [Obs: '+it.observacao+']' : ''}`).join(', ');
 
         try {
@@ -104,7 +141,6 @@
                 body: JSON.stringify({ usuario: nome, cesta: listaFormatada })
             });
 
-            // WHATSAPP REFORMULADO
             let msg = `*NOVO PEDIDO DE COMPRAS*\n------------------------------------------\n*Cliente:* ${nome}\n*Data:* ${new Date().toLocaleDateString('pt-BR')}\n------------------------------------------\n\n`;
             cesta.forEach(it => {
                 msg += `*${it.quantidade}${it.unidade}* de ${it.nome}\n_Ponto: ${it.maturacao}_\n${it.observacao ? '_Obs: '+it.observacao+'_\n' : ''}\n`;

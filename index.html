@@ -6,132 +6,144 @@
     <title>Pedido de Frutas</title>
     <script src="dados.js"></script>
     <style>
-        :root { --primary: #4361ee; --success: #28a745; --bg: #f8f9fa; }
+        :root { --primary: #4361ee; --success: #28a745; --danger: #dc3545; --bg: #f8f9fa; }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
-        .container { max-width: 600px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); overflow: hidden; }
-        .banner { background: var(--primary); color: white; text-align: center; padding: 20px; font-size: 22px; font-weight: bold; }
-        .padding { padding: 15px; }
         
-        .secao-cadastro { background: #f1f4ff; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #d0d7f5; }
-        .label-obrigatorio { display: block; font-size: 11px; font-weight: bold; color: #4361ee; margin-bottom: 5px; margin-top: 10px; text-transform: uppercase; }
-        .campo-texto { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
-        .select-pagamento { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: white; font-size: 14px; width: 100%; }
-
-        .item-card { 
+        /* Layout Flex para suportar a lateral no Desktop */
+        .main-wrapper { 
             display: flex; 
-            flex-wrap: wrap; 
-            padding: 15px; 
-            margin-bottom: 15px;
-            border: 2px solid #e0e6ed; 
-            border-radius: 12px;
-            background: #ffffff;
-            gap: 12px; 
+            max-width: 1000px; 
+            margin: auto; 
+            gap: 20px; 
             align-items: flex-start;
         }
 
-        .img-prod { 
-            width: 75px; 
-            height: 75px; 
-            object-fit: cover; 
-            border-radius: 10px; 
-            background: #f0f0f0; 
-            flex-shrink: 0; 
+        .container { flex: 1; min-width: 0; background: white; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); overflow: hidden; }
+        .banner { background: var(--primary); color: white; text-align: center; padding: 20px; font-size: 22px; font-weight: bold; }
+        .padding { padding: 15px; }
+        
+        #notificacao {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: #4361ee; color: white; padding: 12px 25px; border-radius: 30px;
+            font-size: 14px; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none; z-index: 1000; animation: fadeInOut 2.5s ease-in-out;
+        }
+        @keyframes fadeInOut {
+            0% { opacity: 0; top: 10px; }
+            15% { opacity: 1; top: 20px; }
+            85% { opacity: 1; top: 20px; }
+            100% { opacity: 0; top: 10px; }
         }
 
-        .info-principal { 
-            flex: 1; 
-            min-width: 0; 
+        .secao-cadastro { background: #f1f4ff; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #d0d7f5; }
+        .label-obrigatorio { display: block; font-size: 11px; font-weight: bold; color: #4361ee; margin-bottom: 5px; margin-top: 10px; text-transform: uppercase; }
+        .campo-texto { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; margin-bottom: 5px; }
+        .select-pagamento { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: white; font-size: 14px; }
+
+        .item-card { 
+            display: flex; flex-wrap: wrap; padding: 15px; margin-bottom: 15px;
+            border: 2px solid #e0e6ed; border-radius: 12px; background: #ffffff;
+            gap: 12px; align-items: flex-start; position: relative;
         }
 
-        .nome-prod { 
-            font-weight: bold; 
-            font-size: 17px; 
-            display: block; 
-            margin-bottom: 8px; 
-            color: #2d3436; 
-            white-space: normal; 
-            word-wrap: break-word;
+        .container-baloes { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+        .balao-historico {
+            background: #eef2ff; color: #4361ee; font-size: 9px; font-weight: bold;
+            padding: 2px 6px; border-radius: 10px; border: 1px solid #4361ee;
         }
 
-        .coluna-controles { 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            gap: 8px; 
-            flex-shrink: 0; 
-            min-width: 140px; 
-        }
+        .img-prod { width: 75px; height: 75px; object-fit: cover; border-radius: 10px; background: #f0f0f0; flex-shrink: 0; }
+        .info-principal { flex: 1; min-width: 0; }
+        .nome-prod { font-weight: bold; font-size: 17px; display: block; margin-bottom: 8px; color: #2d3436; }
 
-        .largura-total {
-            width: 100%; 
-            margin-top: 5px;
-        }
+        .coluna-controles { display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; min-width: 140px; }
+        .largura-total { width: 100%; margin-top: 5px; }
 
         .controles-qtd { display: flex; align-items: center; background: #f1f2f6; border-radius: 8px; padding: 2px; }
         .btn-qtd { width: 30px; height: 30px; border: none; background: transparent; cursor: pointer; font-size: 20px; color: var(--primary); font-weight: bold; }
         input[type="number"] { width: 35px; text-align: center; border: none; background: transparent; font-weight: bold; font-size: 16px; }
 
         .grupo-medida { display: flex; gap: 3px; width: 100%; }
-        .opt { 
-            padding: 6px 2px; 
-            border: 1px solid #ddd; 
-            border-radius: 5px; 
-            font-size: 8.5px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            background: #fff; 
-            flex: 1; 
-            text-align: center; 
-        }
+        .opt { padding: 6px 2px; border: 1px solid #ddd; border-radius: 5px; font-size: 8.5px; cursor: pointer; font-weight: bold; background: #fff; flex: 1; text-align: center; }
         .opt.ativa { background: var(--primary); color: white; border-color: var(--primary); }
 
-        .linha-maturacao { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap; }
+        .linha-maturacao { display: flex; gap: 4px; margin-bottom: 2px; flex-wrap: wrap; }
         .opt-m { font-size: 10px; padding: 4px 8px; border: 1px solid #eee; border-radius: 5px; cursor: pointer; background: #f9f9f9; font-weight: bold; }
         .opt-m.ativa { background: #6c757d; color: white; border-color: #6c757d; }
 
         .obs-input { width: 100%; padding: 10px; border: 1px solid #eee; border-radius: 6px; font-size: 13px; margin-bottom: 8px; box-sizing: border-box; }
         .btn-add { background: var(--success); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; font-size: 14px; text-transform: uppercase; }
 
+        /* Estilo da Cesta */
         .cesta { margin-top: 20px; padding: 15px; background: #eef2ff; border-radius: 10px; border: 1px solid #d0d7f5; }
-        .item-cesta-resumo { margin-bottom: 12px; padding-left: 5px; border-left: 3px solid var(--primary); }
-
+        .item-cesta-wrapper { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-left: 3px solid var(--primary); padding-left: 8px; }
+        .btn-excluir { background: var(--danger); color: white; border: none; padding: 6px 12px; border-radius: 20px; font-size: 11px; cursor: pointer; font-weight: bold; }
         .btn-finalizar { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 16px; }
+
+        /* CONFIGURAÇÃO PARA COMPUTADOR (DESKTOP) */
+        @media (min-width: 850px) {
+            .cesta { 
+                margin-top: 0; 
+                width: 320px; 
+                position: sticky; 
+                top: 10px; 
+                max-height: 90vh; 
+                overflow-y: auto; 
+            }
+        }
+
+        /* Ajuste para telas pequenas */
+        @media (max-width: 849px) {
+            .main-wrapper { flex-direction: column; }
+            .cesta { width: auto; margin-bottom: 20px; }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="banner">LISTA DE COMPRAS</div>
-    <div class="padding">
-        <div class="secao-cadastro">
-            <label class="label-obrigatorio">Nome Completo *</label>
-            <input type="text" id="cliente" class="campo-texto">
-            <label class="label-obrigatorio">Número de Telefone *</label>
-            <input type="tel" id="telefone" class="campo-texto" placeholder="(00) 00000-0000">
-            <label class="label-obrigatorio">Endereço Completo *</label>
-            <input type="text" id="endereco" class="campo-texto">
-            <label class="label-obrigatorio">Forma de Pagamento *</label>
-            <select id="pagamento" class="select-pagamento">
-                <option value="">Selecione...</option>
-                <option value="PIX">PIX</option>
-                <option value="Cartão de Crédito">Cartão de Crédito</option>
-                <option value="Cartão de Débito">Cartão de Débito</option>
-            </select>
-        </div>
+<div id="notificacao">Item adicionado com sucesso!</div>
 
-        <input type="text" id="busca" class="campo-texto" placeholder="Buscar fruta..." onkeyup="renderizar()">
-        <div id="lista"></div>
-        <div id="cesta-box" class="cesta" style="display:none">
-            <strong>ITENS NA CESTA</strong>
-            <div id="lista-cesta" style="margin: 12px 0; font-size: 14px;"></div>
-            <button class="btn-finalizar" onclick="processarPedido()">FINALIZAR PEDIDO</button>
+<div class="main-wrapper">
+    <div class="container">
+        <div class="banner">LISTA DE COMPRAS</div>
+        <div class="padding">
+            <div class="secao-cadastro">
+                <label class="label-obrigatorio">Nome Completo *</label>
+                <input type="text" id="cliente" class="campo-texto">
+                <label class="label-obrigatorio">Número de Telefone *</label>
+                <input type="tel" id="telefone" class="campo-texto" placeholder="(00) 00000-0000">
+                <label class="label-obrigatorio">Endereço Completo *</label>
+                <input type="text" id="endereco" class="campo-texto">
+                <label class="label-obrigatorio">Forma de Pagamento *</label>
+                <select id="pagamento" class="select-pagamento">
+                    <option value="">Selecione...</option>
+                    <option value="PIX">PIX</option>
+                    <option value="Cartão de Crédito">Cartão de Crédito</option>
+                    <option value="Cartão de Débito">Cartão de Débito</option>
+                </select>
+            </div>
+
+            <input type="text" id="busca" class="campo-texto" placeholder="Buscar fruta..." onkeyup="renderizar()">
+            <div id="lista"></div>
         </div>
+    </div>
+
+    <div id="cesta-box" class="cesta" style="display:none">
+        <strong>ITENS NA CESTA</strong>
+        <div id="lista-cesta" style="margin: 12px 0; font-size: 14px;"></div>
+        <button class="btn-finalizar" onclick="processarPedido()">FINALIZAR PEDIDO</button>
     </div>
 </div>
 
 <script>
     let catalogo = typeof itensIniciais !== 'undefined' ? itensIniciais : [];
     let cesta = [];
+
+    function mostrarNotificacao(texto) {
+        const notif = document.getElementById('notificacao');
+        notif.innerText = texto; notif.style.display = 'block';
+        setTimeout(() => { notif.style.display = 'none'; }, 2500);
+    }
 
     function selecionar(tipo, i, valor) {
         document.querySelectorAll(`.opt-${tipo}-${i}`).forEach(el => el.classList.remove('ativa'));
@@ -147,29 +159,59 @@
     function adicionar(i) {
         let q = parseInt(document.getElementById('q-'+i).value);
         if(q <= 0) return;
+        
+        let nomeItem = document.getElementById('n-'+i).innerText;
+        let unidade = document.getElementById('val-u-'+i).value;
+        
         cesta.push({
-            id: Date.now(),
-            nome: document.getElementById('n-'+i).innerText,
+            idUnico: Date.now(),
+            idCatalogo: i,
+            nome: nomeItem,
             quantidade: q,
-            unidade: document.getElementById('val-u-'+i).value,
+            unidade: unidade,
             maturacao: document.getElementById('val-m-'+i).value,
             observacao: document.getElementById('obs-'+i).value
         });
+        
+        mostrarNotificacao(`${nomeItem} adicionado!`);
         document.getElementById('q-'+i).value = 0;
         document.getElementById('obs-'+i).value = "";
         atualizarCesta();
     }
 
+    function excluirItem(idUnico) {
+        cesta = cesta.filter(it => it.idUnico !== idUnico);
+        atualizarCesta();
+    }
+
     function atualizarCesta() {
         const box = document.getElementById('cesta-box');
-        if(cesta.length === 0) { box.style.display = 'none'; return; }
+        if(cesta.length === 0) { 
+            box.style.display = 'none';
+            document.querySelectorAll('.container-baloes').forEach(el => el.innerHTML = '');
+            return; 
+        }
         box.style.display = 'block';
         
+        document.querySelectorAll('.container-baloes').forEach(el => el.innerHTML = '');
+        cesta.forEach(it => {
+            let container = document.getElementById('baloes-'+it.idCatalogo);
+            if(container) {
+                let balao = document.createElement('div');
+                balao.className = 'balao-historico';
+                balao.innerText = `${it.quantidade} ${it.unidade} ADICIONADO`;
+                container.appendChild(balao);
+            }
+        });
+
         document.getElementById('lista-cesta').innerHTML = cesta.map(it => `
-            <div class="item-cesta-resumo">
-                • <b>${it.nome.toUpperCase()}</b> - <b>${it.quantidade} ${it.unidade}</b><br>
-                • ${it.maturacao}<br>
-                ${it.observacao ? '• ' + it.observacao : ''}
+            <div class="item-cesta-wrapper">
+                <div>
+                    • <b>${it.nome.toUpperCase()}</b> - <b>${it.quantidade} ${it.unidade}</b><br>
+                    • ${it.maturacao}<br>
+                    ${it.observacao ? '• ' + it.observacao : ''}
+                </div>
+                <button class="btn-excluir" onclick="excluirItem(${it.idUnico})">EXCLUIR</button>
             </div>
         `).join('');
     }
@@ -184,10 +226,6 @@
             alert("ERRO: Preencha todos os dados e adicione itens na cesta.");
             return;
         }
-
-        const URL_PLANILHA = "SUA_URL_AQUI"; 
-        const dadosPlanilha = { nome, telefone: tel, endereco: end, pagamento: pag, itens: cesta };
-        fetch(URL_PLANILHA, { method: 'POST', mode: 'no-cors', body: JSON.stringify(dadosPlanilha) }).catch(e => {});
 
         let msg = `*RESUMO DO PEDIDO*\n\n*DADOS DO CLIENTE*\nNOME: ${nome}\nTELEFONE: ${tel}\nENDEREÇO: ${end}\nPAGAMENTO: ${pag}\n\n*LISTA DE COMPRAS*\n`;
         cesta.forEach(it => {
@@ -214,6 +252,7 @@
                             <div class="opt-m opt-m-${i}" onclick="selecionar('m',${i},'Maduro')">Maduro</div>
                             <div class="opt-m opt-m-${i}" onclick="selecionar('m',${i},'Verde')">Verde</div>
                         </div>
+                        <div class="container-baloes" id="baloes-${i}"></div>
                     </div>
                     <div class="coluna-controles">
                         <div class="controles-qtd">
@@ -236,6 +275,7 @@
             }
         });
         document.getElementById('lista').innerHTML = html;
+        atualizarCesta();
     }
     renderizar();
 </script>

@@ -22,6 +22,17 @@
         .banner { background: var(--primary); color: white; text-align: center; padding: 20px; font-size: 22px; font-weight: bold; }
         .padding { padding: 15px; }
         
+        /* Modal de Ampliação */
+        #modal-imagem {
+            display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.8); align-items: center; justify-content: center;
+        }
+        #img-expandida {
+            max-width: 90%; max-height: 90%; border-radius: 8px; border: 3px solid white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5); object-fit: contain;
+        }
+        .fechar-modal { position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; font-weight: bold; cursor: pointer; }
+
         #notificacao {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
             background: #4361ee; color: white; padding: 12px 25px; border-radius: 30px;
@@ -64,15 +75,16 @@
             background: var(--danger); color: white; border: none; width: 18px; height: 18px;
             border-radius: 50%; font-size: 10px; cursor: pointer; display: flex;
             align-items: center; justify-content: center; line-height: 1; padding: 0;
-            transition: transform 0.1s;
         }
-        .btn-remover-balao:active { transform: scale(0.9); }
 
-        .img-prod { width: 85px; height: 85px; object-fit: cover; border-radius: 10px; background: #f0f0f0; flex-shrink: 0; }
+        /* Imagem aumentada e com cursor de lupa */
+        .img-prod { width: 110px; height: 110px; object-fit: cover; border-radius: 10px; background: #f0f0f0; flex-shrink: 0; cursor: zoom-in; transition: transform 0.2s; }
+        .img-prod:hover { transform: scale(1.03); }
+
         .info-principal { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start; }
-        .nome-prod { font-weight: bold; font-size: 18px; display: block; margin-bottom: 10px; color: #2d3436; width: 100%; }
+        .nome-prod { font-weight: bold; font-size: 18px; display: block; margin-bottom: 5px; color: #2d3436; width: 100%; }
 
-        .coluna-controles { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; flex-shrink: 0; min-width: 150px; border-left: 1px solid #f0f0f0; padding-left: 12px; }
+        .coluna-controles { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; min-width: 150px; border-left: 1px solid #f0f0f0; padding-left: 12px; }
         .largura-total { width: 100%; margin-top: 10px; }
 
         .controles-qtd { display: flex; align-items: center; background: #f1f2f6; border-radius: 8px; padding: 3px; }
@@ -80,15 +92,15 @@
         input[type="number"] { width: 40px; text-align: center; border: none; background: transparent; font-weight: bold; font-size: 17px; }
 
         .grupo-medida { display: flex; gap: 4px; width: 100%; }
-        .opt { padding: 8px 2px; border: 1px solid #ddd; border-radius: 6px; font-size: 10px; cursor: pointer; font-weight: bold; background: #fff; flex: 1; text-align: center; }
+        .opt { padding: 8px 2px; border: 1px solid #ddd; border-radius: 6px; font-size: 9px; cursor: pointer; font-weight: bold; background: #fff; flex: 1; text-align: center; }
         .opt.ativa { background: var(--primary); color: white; border-color: var(--primary); }
 
-        .linha-maturacao { display: flex; gap: 6px; margin-bottom: 2px; flex-wrap: wrap; }
-        .opt-m { font-size: 12px; padding: 6px 12px; border: 1px solid #eee; border-radius: 6px; cursor: pointer; background: #f9f9f9; font-weight: bold; }
+        .linha-maturacao { display: flex; gap: 4px; width: 100%; flex-wrap: wrap; }
+        .opt-m { font-size: 10px; padding: 6px 4px; border: 1px solid #eee; border-radius: 6px; cursor: pointer; background: #f9f9f9; font-weight: bold; flex: 1; text-align: center; }
         .opt-m.ativa { background: #6c757d; color: white; border-color: #6c757d; }
 
         .obs-input { width: 100%; padding: 12px; border: 1px solid #eee; border-radius: 8px; font-size: 13px; margin-bottom: 10px; box-sizing: border-box; }
-        .btn-add { background: var(--success); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: bold; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .btn-add { background: var(--success); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: bold; font-size: 14px; text-transform: uppercase; }
 
         .cesta { margin-top: 20px; padding: 15px; background: #eef2ff; border-radius: 12px; border: 1px solid #d0d7f5; }
         .item-cesta-wrapper { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-left: 4px solid var(--primary); padding-left: 10px; }
@@ -102,13 +114,17 @@
         @media (max-width: 849px) {
             .main-wrapper { flex-direction: column; align-items: center; }
             .container { width: 100%; }
-            .item-card { flex-direction: row; align-items: flex-start; }
-            .nome-prod { width: 100%; border-bottom: 2px solid #f8f9fa; padding-bottom: 8px; }
             .coluna-controles { border-left: none; padding-left: 0; align-items: flex-end; }
+            .img-prod { width: 100px; height: 100px; }
         }
     </style>
 </head>
 <body>
+
+<div id="modal-imagem" onclick="this.style.display='none'">
+    <span class="fechar-modal">&times;</span>
+    <img id="img-expandida" src="" alt="Imagem ampliada">
+</div>
 
 <div id="notificacao">Item adicionado com sucesso!</div>
 
@@ -131,7 +147,6 @@
                     <option value="Cartão de Débito">Cartão de Débito</option>
                 </select>
             </div>
-
             <input type="text" id="busca" class="campo-texto" placeholder="Buscar fruta..." onkeyup="renderizar()">
             <div id="lista"></div>
         </div>
@@ -151,6 +166,14 @@
 <script>
     let catalogo = typeof itensIniciais !== 'undefined' ? itensIniciais : [];
     let cesta = [];
+
+    // Função para abrir o modal
+    function abrirModal(src) {
+        const modal = document.getElementById('modal-imagem');
+        const img = document.getElementById('img-expandida');
+        modal.style.display = "flex";
+        img.src = src;
+    }
 
     function mostrarNotificacao(texto) {
         const notif = document.getElementById('notificacao');
@@ -173,7 +196,6 @@
         let q = parseInt(document.getElementById('q-'+i).value);
         if(q <= 0) return;
         let nomeItem = document.getElementById('n-'+i).innerText;
-        
         cesta.push({
             idUnico: Date.now(),
             idCatalogo: i,
@@ -183,7 +205,6 @@
             maturacao: document.getElementById('val-m-'+i).value,
             observacao: document.getElementById('obs-'+i).value
         });
-        
         mostrarNotificacao(`${nomeItem} adicionado!`);
         document.getElementById('q-'+i).value = 0;
         document.getElementById('obs-'+i).value = "";
@@ -198,41 +219,27 @@
     function atualizarCesta() {
         const box = document.getElementById('cesta-box');
         const rodape = document.getElementById('rodape-finalizar');
-        
         if(cesta.length === 0) { 
-            box.style.display = 'none';
-            rodape.style.display = 'none';
+            box.style.display = 'none'; rodape.style.display = 'none';
             document.querySelectorAll('.container-baloes').forEach(el => el.innerHTML = '');
             return; 
         }
-        
-        box.style.display = 'block';
-        rodape.style.display = 'block';
-        
+        box.style.display = 'block'; rodape.style.display = 'block';
         document.querySelectorAll('.container-baloes').forEach(el => el.innerHTML = '');
         cesta.forEach(it => {
             let container = document.getElementById('baloes-'+it.idCatalogo);
             if(container) {
                 let balao = document.createElement('div');
                 balao.className = 'balao-historico';
-                balao.innerHTML = `
-                    <span>${it.quantidade} ${it.unidade}</span>
-                    <button class="btn-remover-balao" title="Remover" onclick="excluirItem(${it.idUnico})">✕</button>
-                `;
+                balao.innerHTML = `<span>${it.quantidade} ${it.unidade}</span><button class="btn-remover-balao" onclick="excluirItem(${it.idUnico})">✕</button>`;
                 container.appendChild(balao);
             }
         });
-
         document.getElementById('lista-cesta').innerHTML = cesta.map(it => `
             <div class="item-cesta-wrapper">
-                <div>
-                    • <b>${it.nome.toUpperCase()}</b> - <b>${it.quantidade} ${it.unidade}</b><br>
-                    • ${it.maturacao}<br>
-                    ${it.observacao ? '• ' + it.observacao : ''}
-                </div>
+                <div>• <b>${it.nome.toUpperCase()}</b> - <b>${it.quantidade} ${it.unidade}</b><br>• ${it.maturacao}<br>${it.observacao ? '• ' + it.observacao : ''}</div>
                 <button class="btn-excluir" onclick="excluirItem(${it.idUnico})">EXCLUIR</button>
-            </div>
-        `).join('');
+            </div>`).join('');
     }
 
     async function processarPedido() {
@@ -240,17 +247,9 @@
         let tel = document.getElementById('telefone').value.trim();
         let end = document.getElementById('endereco').value.trim();
         let pag = document.getElementById('pagamento').value;
-
-        if(!nome || !tel || !end || !pag || cesta.length === 0) {
-            alert("ERRO: Preencha todos os dados e adicione itens na cesta.");
-            return;
-        }
-
-        let msg = `*RESUMO DO PEDIDO*\n\n*DADOS DO CLIENTE*\nNOME: ${nome}\nTELEFONE: ${tel}\nENDEREÇO: ${end}\nPAGAMENTO: ${pag}\n\n*LISTA DE COMPRAS*\n`;
-        cesta.forEach(it => {
-            msg += `• *${it.nome.toUpperCase()}* - *${it.quantidade} ${it.unidade}*\n• ${it.maturacao}\n${it.observacao ? '• '+it.observacao+'\n' : ''}--------------------------\n`;
-        });
-
+        if(!nome || !tel || !end || !pag || cesta.length === 0) { alert("ERRO: Preencha todos os dados."); return; }
+        let msg = `*RESUMO DO PEDIDO*\n\n*CLIENTE*\n${nome}\n${tel}\n${end}\n${pag}\n\n*ITENS*\n`;
+        cesta.forEach(it => { msg += `• *${it.nome.toUpperCase()}* - ${it.quantidade} ${it.unidade}\n• ${it.maturacao}\n${it.observacao ? '• '+it.observacao+'\n' : ''}---\n`; });
         window.open(`https://api.whatsapp.com/send?phone=5511949406898&text=${encodeURIComponent(msg)}`);
         cesta = []; atualizarCesta();
     }
@@ -263,28 +262,25 @@
                 html += `
                 <div class="item-card">
                     <span class="nome-prod" id="n-${i}">${item.nome}</span>
-                    <img src="${item.img}" class="img-prod" onerror="this.src='https://via.placeholder.com/80'">
-                    <div class="info-principal">
-                        <div class="linha-maturacao">
-                            <input type="hidden" id="val-m-${i}" value="No ponto">
-                            <div class="opt-m ativa opt-m-${i}" onclick="selecionar('m',${i},'No ponto')">Ponto</div>
-                            <div class="opt-m opt-m-${i}" onclick="selecionar('m',${i},'Maduro')">Maduro</div>
-                            <div class="opt-m opt-m-${i}" onclick="selecionar('m',${i},'Verde')">Verde</div>
-                        </div>
-                        <div class="container-baloes" id="baloes-${i}"></div>
-                    </div>
+                    <img src="${item.img}" class="img-prod" onclick="abrirModal('${item.img}')" onerror="this.src='https://via.placeholder.com/110'">
+                    <div class="info-principal"><div class="container-baloes" id="baloes-${i}"></div></div>
                     <div class="coluna-controles">
                         <div class="controles-qtd">
                             <button class="btn-qtd" onclick="qtd(${i},-1)">-</button>
                             <input type="number" id="q-${i}" value="0" readonly>
                             <button class="btn-qtd" onclick="qtd(${i},1)">+</button>
                         </div>
-                        
                         <div class="grupo-medida">
                             <input type="hidden" id="val-u-${i}" value="UNIDADE">
                             <div class="opt ativa opt-u-${i}" onclick="selecionar('u',${i},'UNIDADE')">UNIDADE</div>
-                            <div class="opt opt-u-${i}" onclick="selecionar('u',${i},'KG')">KG</div>
+                            <div class="opt opt-u-${i}" onclick="selecionar('u',${i},'QUILOGRAMA')">QUILOGRAMA</div>
                             <div class="opt opt-u-${i}" onclick="selecionar('u',${i},'CAIXA')">CAIXA</div>
+                        </div>
+                        <div class="linha-maturacao">
+                            <input type="hidden" id="val-m-${i}" value="No ponto">
+                            <div class="opt-m ativa opt-m-${i}" onclick="selecionar('m',${i},'No ponto')">PONTO</div>
+                            <div class="opt-m opt-m-${i}" onclick="selecionar('m',${i},'Maduro')">MADURO</div>
+                            <div class="opt-m opt-m-${i}" onclick="selecionar('m',${i},'Verde')">VERDE</div>
                         </div>
                     </div>
                     <div class="largura-total">

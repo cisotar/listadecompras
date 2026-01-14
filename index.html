@@ -49,7 +49,6 @@
         .obs-input { width: 100%; padding: 12px; border: 1px solid #eee; border-radius: 8px; margin: 10px 0; box-sizing: border-box; }
         .btn-add { background: var(--success); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: bold; text-transform: uppercase; }
 
-        /* Estilos da Cesta Recuperados */
         .cesta { padding: 15px; background: #eef2ff; border-radius: 12px; border: 1px solid #d0d7f5; width: 320px; position: sticky; top: 10px; max-height: 85vh; overflow-y: auto; }
         .item-cesta-wrapper { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-left: 4px solid var(--primary); padding-left: 10px; background: white; padding: 10px; border-radius: 4px; }
         .btn-excluir { background: var(--danger); color: white; border: none; padding: 7px 14px; border-radius: 20px; font-size: 11px; cursor: pointer; font-weight: bold; }
@@ -92,7 +91,7 @@
                 <label class="label-obrigatorio">Enviar para: *</label>
                 <select id="destino-whatsapp" class="select-pagamento">
                     <option value="5511999448479">Banca da Andreia</option>
-                    <option value="5511949406898">Tão</option>
+                    <option value="55119949406898">Tão</option>
                 </select>
             </div>
             <input type="text" id="busca" class="campo-texto" placeholder="Buscar fruta..." onkeyup="renderizar()">
@@ -179,12 +178,39 @@
     }
 
     function processarPedido() {
-        let nome = document.getElementById('cliente').value;
-        let destino = document.getElementById('destino-whatsapp').value;
-        if(!nome || cesta.length === 0) { alert("Preencha seu nome e adicione itens."); return; }
-        
-        let msg = `*RESUMO DO PEDIDO*\n\n*CLIENTE:* ${nome}\n*PAGAMENTO:* ${document.getElementById('pagamento').value}\n\n`;
-        cesta.forEach(it => msg += `• *${it.nome}* (${it.quantidade} ${it.unidade}) - ${it.maturacao}\n${it.observacao ? 'Obs: '+it.observacao+'\n' : ''}---\n`);
+        const nome = document.getElementById('cliente').value;
+        const tel = document.getElementById('telefone').value;
+        const end = document.getElementById('endereco').value;
+        const pag = document.getElementById('pagamento').value;
+        const destino = document.getElementById('destino-whatsapp').value;
+
+        if(!nome || !tel || !end || !pag || cesta.length === 0) { 
+            alert("Preencha todos os dados e adicione itens."); 
+            return; 
+        }
+
+        // Dados para a Planilha
+        const dadosPlanilha = {
+            cliente: nome,
+            telefone: tel,
+            endereco: end,
+            pagamento: pag,
+            cesta: cesta
+        };
+
+        // Enviar para a Planilha via Apps Script
+        fetch("https://script.google.com/macros/s/AKfycbwTMaIf0NbURQRzTvK8_oaup8vrqjJyBPrnLx1dBK8FrmKDvmkGmzqmF9gNo5OUN0M-IA/exec", {
+            method: "POST",
+            mode: "no-cors",
+            cache: "no-cache",
+            body: JSON.stringify(dadosPlanilha)
+        });
+
+        // Formatar e enviar para o WhatsApp
+        let msg = `*RESUMO DO PEDIDO*\n\n*CLIENTE:* ${nome}\n*TEL:* ${tel}\n*END:* ${end}\n*PAG:* ${pag}\n\n*ITENS:*\n`;
+        cesta.forEach(it => {
+            msg += `• *${it.nome}* (${it.quantidade} ${it.unidade}) - ${it.maturacao}\n${it.observacao ? 'Obs: '+it.observacao+'\n' : ''}---\n`;
+        });
         
         window.open(`https://api.whatsapp.com/send?phone=${destino}&text=${encodeURIComponent(msg)}`);
     }

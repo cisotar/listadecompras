@@ -91,6 +91,8 @@
                 <label class="label-obrigatorio">Enviar para: *</label>
                 <select id="destino-whatsapp" class="select-pagamento">
                     <option value="5511999448479">Banca da Andreia</option>
+                    <option value="5511996720589">Banca da Inês</option>
+                    <option value="5511999400489">Varejão Ki Fruta</option>
                     <option value="55119949406898">Tão</option>
                 </select>
             </div>
@@ -206,11 +208,27 @@
             body: JSON.stringify(dadosPlanilha)
         });
 
-        // Formatar e enviar para o WhatsApp
-        let msg = `*RESUMO DO PEDIDO*\n\n*CLIENTE:* ${nome}\n*TEL:* ${tel}\n*END:* ${end}\n*PAG:* ${pag}\n\n*ITENS:*\n`;
+        // --- FORMATAÇÃO MODERNA DA MENSAGEM ---
+        let msg = `*NOVO PEDIDO - BANCA DA ANDREIA*\n`;
+        msg += `══════════════════════════════\n\n`;
+        msg += `👤 *Cliente:* ${nome}\n`;
+        msg += `📱 *WhatsApp:* ${tel}\n`;
+        msg += `📍 *Endereço:* ${end}\n`;
+        msg += `💳 *Pagamento:* ${pag}\n\n`;
+        
+        msg += `══════════════════════════════\n`;
+        msg += `🛒 *ITENS DO PEDIDO:*\n\n`;
+        
         cesta.forEach(it => {
-            msg += `• *${it.nome}* (${it.quantidade} ${it.unidade}) - ${it.maturacao}\n${it.observacao ? 'Obs: '+it.observacao+'\n' : ''}---\n`;
+            msg += `✅ *${it.quantidade}x ${it.nome}*\n`;
+            msg += `└ Unidade: ${it.unidade}\n`;
+            msg += `└ Ponto: ${it.maturacao}\n`;
+            if(it.observacao) msg += `└ 📝 Obs: ${it.observacao}\n`;
+            msg += `\n`;
         });
+        
+        msg += `══════════════════════════════\n`;
+        msg += `_Pedido gerado via Catálogo Digital_`;
         
         window.open(`https://api.whatsapp.com/send?phone=${destino}&text=${encodeURIComponent(msg)}`);
     }
